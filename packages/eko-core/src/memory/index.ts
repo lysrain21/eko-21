@@ -74,7 +74,7 @@ export async function compressAgentMessages(
     return;
   }
   try {
-    doCompressAgentMessages(agentContext, rlm, messages, tools);
+    await doCompressAgentMessages(agentContext, rlm, messages, tools);
   } catch (e) {
     Log.error("Error compressing agent messages:", e);
   }
