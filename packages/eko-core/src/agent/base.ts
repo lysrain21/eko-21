@@ -80,7 +80,7 @@ export class Agent {
       mcpClient &&
         !mcpClient.isConnected() &&
         (await mcpClient.connect(context.controller.signal));
-      return this.runWithContext(agentContext, mcpClient, config.maxReactNum);
+      return await this.runWithContext(agentContext, mcpClient, config.maxReactNum);
     } finally {
       mcpClient && (await mcpClient.close());
     }
