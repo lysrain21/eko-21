@@ -6,7 +6,8 @@
     "packages/eko-core",
     "packages/eko-extension",
     "packages/eko-nodejs",
-    "packages/eko-web"
+    "packages/eko-web",
+    "example/*"
   ],
   "scripts": {
     "build": "pnpm -r --sequential build",
