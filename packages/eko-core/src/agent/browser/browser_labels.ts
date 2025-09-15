@@ -21,9 +21,11 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
   - If the webpage content hasn't loaded, please use the \`wait\` tool to allow time for the content to load.
 * ELEMENT INTERACTION:
    - Only use indexes that exist in the provided element list
+   - Browser tools only return elements in visible viewport by default
    - Each element has a unique index number (e.g., "[33]:<button>Submit</button>")
    - Elements marked with "[]:" are non-interactive (for context only, e.g., "[]: Google")
    - Use the latest element index, do not rely on historical outdated element indexes
+   - Due to technical limitations, not all interactive elements may be identified; use coordinates to interact with unlisted elements
 * ERROR HANDLING:
    - If no suitable elements exist, use other functions to complete the task
    - If stuck, try alternative approaches, don't refuse tasks
@@ -258,7 +260,7 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
       },
       {
         name: "input_text",
-        description: "Input text into an element",
+        description: "Input text into the element. It will first click the element to activate it, then proceed with text input.",
         parameters: {
           type: "object",
           properties: {
