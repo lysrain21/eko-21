@@ -260,7 +260,7 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
       },
       {
         name: "input_text",
-        description: "Input text into an element",
+        description: "Input text into the element. It will first click the element to activate it, then proceed with text input.",
         parameters: {
           type: "object",
           properties: {
