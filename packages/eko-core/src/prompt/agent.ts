@@ -54,7 +54,7 @@ const FOR_EACH_NODE = `
 
 const FOR_EACH_PROMPT = `
 * forEach node
-repetitive tasks, when executing to the forEach node, require the use of the \`${foreach_task}\` tool.
+For repetitive tasks, when executing a forEach node, the \`${foreach_task}\` tool must be used. Loop tasks support parallel tool calls, and during parallel execution, this tool needs to be called interspersed throughout the process.
 `;
 
 const WATCH_NODE = `

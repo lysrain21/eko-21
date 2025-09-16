@@ -6,17 +6,17 @@ import { ToolWrapper } from "../tools/wrapper";
 import { AgentChain, ToolChain } from "../core/chain";
 import Context, { AgentContext } from "../core/context";
 import {
-  ForeachTaskTool,
   McpTool,
-  VariableStorageTool,
+  ForeachTaskTool,
   WatchTriggerTool,
+  VariableStorageTool,
 } from "../tools";
 import { mergeTools } from "../common/utils";
 import {
-  WorkflowAgent,
+  Tool,
   IMcpClient,
   LLMRequest,
-  Tool,
+  WorkflowAgent,
   ToolExecuter,
   ToolResult,
   ToolSchema,
@@ -31,9 +31,9 @@ import {
   LanguageModelV2ToolResultPart,
 } from "@ai-sdk/provider";
 import {
+  getTool,
   callAgentLLM,
   convertTools,
-  getTool,
   convertToolResult,
   defaultMessageProviderOptions,
 } from "./llm";
@@ -193,7 +193,7 @@ export class Agent {
     let context = agentContext.context;
     let user_messages: LanguageModelV2Prompt = [];
     let toolResults: LanguageModelV2ToolResultPart[] = [];
-    results = memory.removeDuplicateToolUse(results);
+    // results = memory.removeDuplicateToolUse(results);
     if (results.length == 0) {
       return null;
     }
