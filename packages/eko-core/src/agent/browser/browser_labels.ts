@@ -2,8 +2,8 @@ import { AgentContext } from "../../core/context";
 import { run_build_dom_tree } from "./build_dom_tree";
 import { BaseBrowserAgent, AGENT_NAME } from "./browser_base";
 import {
-  LanguageModelV2FilePart,
   LanguageModelV2Prompt,
+  LanguageModelV2FilePart,
 } from "@ai-sdk/provider";
 import { Tool, ToolResult, IMcpClient } from "../../types";
 import { mergeTools, sleep, toImage } from "../../common/utils";
@@ -34,6 +34,8 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
 * BROWSER OPERATION:
    - Use scroll to find elements you are looking for, When extracting content, prioritize using extract_page_content, only scroll when you need to load more content
    - Please follow user instructions and don't be lazy until the task is completed. For example, if a user asks you to find 30 people, don't just find 10 - keep searching until you find all 30
+* Parallelism:
+   - When operating multiple independent steps, they should be executed in parallel as much as possible. For example, when filling out multiple form fields, they should be filled in parallel as much as possible to improve efficiency, rather than operating step by step.
 * During execution, please output user-friendly step information. Do not output HTML-related element and index information to users, as this would cause user confusion.
 `;
     const _tools_ = [] as Tool[];
@@ -208,13 +210,13 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
     return [
       {
         name: "navigate_to",
-        description: "Navigate to a specific url",
+        description: "Navigate to a specific URL in the browser. Use this tool when you need to visit a webpage or change the current page location.",
         parameters: {
           type: "object",
           properties: {
             url: {
               type: "string",
-              description: "The url to navigate to",
+              description: "The complete URL to navigate to",
             },
           },
           required: ["url"],
@@ -230,7 +232,7 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
       },
       {
         name: "current_page",
-        description: "Get the information of the current webpage (url, title)",
+        description: "Get the currently active webpage information, return tabId, URL and title",
         parameters: {
           type: "object",
           properties: {},
@@ -246,7 +248,7 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
       },
       {
         name: "go_back",
-        description: "Navigate back in browser history",
+        description: "Go back to the previous page in browser history",
         parameters: {
           type: "object",
           properties: {},
@@ -260,7 +262,7 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
       },
       {
         name: "input_text",
-        description: "Input text into the element. It will first click the element to activate it, then proceed with text input.",
+        description: "Inputs text into a element by first clicking to focus the element, then clearing any existing text and typing the new text. Optionally presses Enter after input completion.",
         parameters: {
           type: "object",
           properties: {
@@ -373,7 +375,7 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
       },
       {
         name: "hover_to_element",
-        description: "Mouse hover over the element",
+        description: "Hover the mouse over an element, use it when you need to hover to display more interactive information",
         parameters: {
           type: "object",
           properties: {
@@ -396,7 +398,7 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
       {
         name: "extract_page_content",
         description:
-          "Extract the text content and image links of the current webpage, please use this tool to obtain webpage data.",
+          "Extracts all content from the current webpage, including text and image links. Please use this tool when you need to retrieve webpage content.",
         parameters: {
           type: "object",
           properties: {},
@@ -466,7 +468,7 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
       },
       {
         name: "get_all_tabs",
-        description: "Get all tabs of the current browser",
+        description: "Get all tabs of the current browser, returns the tabId, URL, and title of all tab pages",
         parameters: {
           type: "object",
           properties: {},
@@ -482,7 +484,7 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
       },
       {
         name: "switch_tab",
-        description: "Switch to the specified tab page",
+        description: "Switch to the specified tab (based on tabId)",
         parameters: {
           type: "object",
           properties: {
@@ -505,13 +507,13 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
       {
         name: "wait",
         noPlan: true,
-        description: "Wait for specified duration",
+        description: "Wait/pause execution for a specified duration. Use this tool when you need to wait for data loading, page rendering, or introduce delays between operations.",
         parameters: {
           type: "object",
           properties: {
             duration: {
               type: "number",
-              description: "Duration in millisecond",
+              description: "Wait duration in milliseconds",
               default: 500,
               minimum: 200,
               maximum: 10000,

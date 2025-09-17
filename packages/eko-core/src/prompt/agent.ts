@@ -30,6 +30,7 @@ You are {name}, an autonomous AI agent for {agent} agent.
   </nodes>
 </root>
 
+For maximum efficiency, whenever you need to perform multiple independent operations, invoke all relevant tools simultaneously rather than sequentially.
 The output language should follow the language corresponding to the user's task.
 `;
 
