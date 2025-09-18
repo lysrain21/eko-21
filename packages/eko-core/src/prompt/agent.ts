@@ -42,7 +42,7 @@ During the task execution process, you can use the \`${human_interact}\` tool to
 const VARIABLE_PROMPT = `
 * VARIABLE STORAGE
 When a step node has input/output variable attributes, use the \`${variable_storage}\` tool to read from and write to these variables, these variables enable context sharing and coordination between multiple agents.
-\`${variable_storage}\` tool does not support parallel processing.
+The \`${variable_storage}\` tool does not support parallel calls.
 `;
 
 const FOR_EACH_NODE = `
@@ -116,11 +116,11 @@ export function getAgentSystemPrompt(
     prompt += "\n Main task: " + context.chain.taskPrompt;
     prompt += "\n\n# Pre-task execution results";
     for (let i = 0; i < context.chain.agents.length; i++) {
-      let agentChain = context.chain.agents[i];
+      const agentChain = context.chain.agents[i];
       if (agentChain.agentResult) {
         prompt += `\n## ${
           agentChain.agent.task || agentChain.agent.name
-        }\n${sub(agentChain.agentResult, 800, true)}`;
+        }\n<taskResult>\n${sub(agentChain.agentResult, 600, true)}\n</taskResult>`;
       }
     }
   }
@@ -133,7 +133,7 @@ export function getAgentSystemPrompt(
     .trim();
   sysPrompt += "\n"
   if (agent.canParallelToolCalls()) {
-    sysPrompt += "\nFor maximum efficiency, whenever you need to perform multiple independent operations, invoke all relevant tools simultaneously rather than sequentially. Parallel execution should only be used when operations are truly independent and won't cause conflicts or race conditions."
+    sysPrompt += "\nFor maximum efficiency, when executing multiple independent operations that do not depend on each other or conflict with one another, these tools can be called in parallel simultaneously."
   }
   sysPrompt += "\nThe output language should follow the language corresponding to the user's task."
   return sysPrompt;
