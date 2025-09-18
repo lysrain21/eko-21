@@ -70,24 +70,13 @@ You are {name}, an autonomous AI Agent Planner.
 `;
 
 const PLAN_TASK_DESCRIPTION = `Your task is to understand the user's requirements, dynamically plan the user's tasks based on the Agent list, and please follow the steps below:
-1. Understand the user's requirements.
-2. Analyze the Agents that need to be used based on the user's requirements.
-3. Generate the Agent calling plan based on the analysis results.
-4. About agent name, please do not arbitrarily fabricate non-existent agent names.
-5. You only need to provide the steps to complete the user's task, key steps only, no need to be too detailed.
-6. Please strictly follow the output format and example output.
-7. The output language should follow the language corresponding to the user's task.`;
-
-const PLAN_CHAT_EXAMPLE = `User: hello.
-Output result:
-<root>
-  <name>Chat</name>
-  <thought>Alright, the user wrote "hello". That's pretty straightforward. I need to respond in a friendly and welcoming manner.</thought>
-  <agents>
-    <!-- Chat agents can exist without the <task> and <nodes> nodes. -->
-    <agent name="Chat" id="0" dependsOn=""></agent>
-  </agents>
-</root>`;
+- Analyze the Agents that need to be used based on the user's requirements.
+- Generate the Agent calling plan based on the analysis results.
+- About agent name, please do not arbitrarily fabricate non-existent agent names.
+- You only need to provide the steps to complete the user's task, key steps only, no need to be too detailed.
+- Try to break down tasks into independently completable subtasks, and for maximum efficiency, run multiple independent subtasks in parallel whenever possible.
+- Please strictly follow the output format and example output.
+- The output language should follow the language corresponding to the user's task.`;
 
 const PLAN_EXAMPLE_LIST = [
   `User: Open Boss Zhipin, find 10 operation positions in Chengdu, and send a personal introduction to the recruiters based on the page information.
@@ -291,14 +280,9 @@ export async function getPlanSystemPrompt(
     planExampleList ||
     context.variables.get("plan_example_list") ||
     PLAN_EXAMPLE_LIST;
-  const hasChatAgent =
-    context.agents.filter((a) => a.Name == "Chat").length > 0;
   let example_prompt = "";
-  const example_list = hasChatAgent
-    ? [PLAN_CHAT_EXAMPLE, ...plan_example_list]
-    : [...plan_example_list];
-  for (let i = 0; i < example_list.length; i++) {
-    example_prompt += `## Example ${i + 1}\n${example_list[i]}\n\n`;
+  for (let i = 0; i < plan_example_list.length; i++) {
+    example_prompt += `## Example ${i + 1}\n${plan_example_list[i]}\n\n`;
   }
   return PLAN_SYSTEM_TEMPLATE.replace("{name}", config.name)
     .replace("{task_description}", task_description)

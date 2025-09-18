@@ -10,6 +10,7 @@ type GlobalConfig = {
   fileTextMaxLength: number;
   maxDialogueImgFileNum: number;
   toolResultMultimodal: boolean;
+  parallelToolCalls: boolean;
   expertMode: boolean;
   expertModeTodoLoopNum: number;
 }
@@ -26,6 +27,7 @@ const config: GlobalConfig = {
   fileTextMaxLength: 20000,
   maxDialogueImgFileNum: 1,
   toolResultMultimodal: true,
+  parallelToolCalls: true,
   expertMode: false,
   expertModeTodoLoopNum: 10,
 };

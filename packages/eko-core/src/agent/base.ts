@@ -2,38 +2,38 @@ import config from "../config";
 import Log from "../common/log";
 import * as memory from "../memory";
 import { RetryLanguageModel } from "../llm";
+import { mergeTools } from "../common/utils";
 import { ToolWrapper } from "../tools/wrapper";
 import { AgentChain, ToolChain } from "../core/chain";
 import Context, { AgentContext } from "../core/context";
 import {
-  ForeachTaskTool,
   McpTool,
-  VariableStorageTool,
+  ForeachTaskTool,
   WatchTriggerTool,
+  VariableStorageTool,
 } from "../tools";
-import { mergeTools } from "../common/utils";
 import {
-  WorkflowAgent,
+  Tool,
   IMcpClient,
   LLMRequest,
-  Tool,
-  ToolExecuter,
   ToolResult,
   ToolSchema,
-  StreamCallback,
+  ToolExecuter,
+  WorkflowAgent,
   HumanCallback,
+  StreamCallback,
 } from "../types";
 import {
-  LanguageModelV2FilePart,
   LanguageModelV2Prompt,
+  LanguageModelV2FilePart,
   LanguageModelV2TextPart,
   LanguageModelV2ToolCallPart,
   LanguageModelV2ToolResultPart,
 } from "@ai-sdk/provider";
 import {
-  callAgentLLM,
-  convertTools,
   getTool,
+  convertTools,
+  callAgentLLM,
   convertToolResult,
   defaultMessageProviderOptions,
 } from "./llm";
@@ -73,14 +73,18 @@ export class Agent {
   }
 
   public async run(context: Context, agentChain: AgentChain): Promise<string> {
-    let mcpClient = this.mcpClient || context.config.defaultMcpClient;
-    let agentContext = new AgentContext(context, this, agentChain);
+    const mcpClient = this.mcpClient || context.config.defaultMcpClient;
+    const agentContext = new AgentContext(context, this, agentChain);
     try {
       this.agentContext = agentContext;
       mcpClient &&
         !mcpClient.isConnected() &&
         (await mcpClient.connect(context.controller.signal));
-      return await this.runWithContext(agentContext, mcpClient, config.maxReactNum);
+      return await this.runWithContext(
+        agentContext,
+        mcpClient,
+        config.maxReactNum
+      );
     } finally {
       mcpClient && (await mcpClient.close());
     }
@@ -189,77 +193,36 @@ export class Agent {
     agentTools: Tool[],
     results: Array<LanguageModelV2TextPart | LanguageModelV2ToolCallPart>
   ): Promise<string | null> {
-    let text: string | null = null;
-    let context = agentContext.context;
-    let user_messages: LanguageModelV2Prompt = [];
-    let toolResults: LanguageModelV2ToolResultPart[] = [];
-    results = memory.removeDuplicateToolUse(results);
+    const user_messages: LanguageModelV2Prompt = [];
+    const toolResults: LanguageModelV2ToolResultPart[] = [];
+    // results = memory.removeDuplicateToolUse(results);
     if (results.length == 0) {
       return null;
     }
-    for (let i = 0; i < results.length; i++) {
-      let result = results[i];
-      if (result.type == "text") {
-        text = result.text;
-        continue;
-      }
-      let toolResult: ToolResult;
-      let toolChain = new ToolChain(
-        result,
-        agentContext.agentChain.agentRequest as LLMRequest
+    if (results.every((s) => s.type == "text")) {
+      return results.map((s) => s.text).join("\n\n");
+    }
+    const toolCalls = results.filter((s) => s.type == "tool-call");
+    if (toolCalls.length > 1 && this.canParallelToolCalls(toolCalls)) {
+      const results = await Promise.all(
+        toolCalls.map((toolCall) =>
+          this.callToolCall(agentContext, agentTools, toolCall, user_messages)
+        )
       );
-      agentContext.agentChain.push(toolChain);
-      try {
-        let args =
-          typeof result.input == "string"
-            ? JSON.parse(result.input || "{}")
-            : result.input || {};
-        toolChain.params = args;
-        let tool = getTool(agentTools, result.toolName);
-        if (!tool) {
-          throw new Error(result.toolName + " tool does not exist");
-        }
-        toolResult = await tool.execute(args, agentContext, result);
-        toolChain.updateToolResult(toolResult);
-        agentContext.consecutiveErrorNum = 0;
-      } catch (e) {
-        Log.error("tool call error: ", result.toolName, result.input, e);
-        toolResult = {
-          content: [
-            {
-              type: "text",
-              text: e + "",
-            },
-          ],
-          isError: true,
-        };
-        toolChain.updateToolResult(toolResult);
-        if (++agentContext.consecutiveErrorNum >= 10) {
-          throw e;
-        }
+      for (let i = 0; i < results.length; i++) {
+        toolResults.push(results[i]);
       }
-      const callback = this.callback || context.config.callback;
-      if (callback) {
-        await callback.onMessage(
-          {
-            taskId: context.taskId,
-            agentName: agentContext.agent.Name,
-            nodeId: agentContext.agentChain.agent.id,
-            type: "tool_result",
-            toolId: result.toolCallId,
-            toolName: result.toolName,
-            params: result.input || {},
-            toolResult: toolResult,
-          },
-          agentContext
+    } else {
+      for (let i = 0; i < toolCalls.length; i++) {
+        const toolCall = toolCalls[i];
+        const toolResult = await this.callToolCall(
+          agentContext,
+          agentTools,
+          toolCall,
+          user_messages
         );
+        toolResults.push(toolResult);
       }
-      const llmToolResult = convertToolResult(
-        result,
-        toolResult,
-        user_messages
-      );
-      toolResults.push(llmToolResult);
     }
     messages.push({
       role: "assistant",
@@ -273,8 +236,72 @@ export class Agent {
       user_messages.forEach((message) => messages.push(message));
       return null;
     } else {
-      return text;
+      return results
+        .filter((s) => s.type == "text")
+        .map((s) => s.text)
+        .join("\n\n");
     }
+  }
+
+  protected async callToolCall(
+    agentContext: AgentContext,
+    agentTools: Tool[],
+    result: LanguageModelV2ToolCallPart,
+    user_messages: LanguageModelV2Prompt = []
+  ): Promise<LanguageModelV2ToolResultPart> {
+    const context = agentContext.context;
+    const toolChain = new ToolChain(
+      result,
+      agentContext.agentChain.agentRequest as LLMRequest
+    );
+    agentContext.agentChain.push(toolChain);
+    let toolResult: ToolResult;
+    try {
+      const args =
+        typeof result.input == "string"
+          ? JSON.parse(result.input || "{}")
+          : result.input || {};
+      toolChain.params = args;
+      let tool = getTool(agentTools, result.toolName);
+      if (!tool) {
+        throw new Error(result.toolName + " tool does not exist");
+      }
+      toolResult = await tool.execute(args, agentContext, result);
+      toolChain.updateToolResult(toolResult);
+      agentContext.consecutiveErrorNum = 0;
+    } catch (e) {
+      Log.error("tool call error: ", result.toolName, result.input, e);
+      toolResult = {
+        content: [
+          {
+            type: "text",
+            text: e + "",
+          },
+        ],
+        isError: true,
+      };
+      toolChain.updateToolResult(toolResult);
+      if (++agentContext.consecutiveErrorNum >= 10) {
+        throw e;
+      }
+    }
+    const callback = this.callback || context.config.callback;
+    if (callback) {
+      await callback.onMessage(
+        {
+          taskId: context.taskId,
+          agentName: agentContext.agent.Name,
+          nodeId: agentContext.agentChain.agent.id,
+          type: "tool_result",
+          toolId: result.toolCallId,
+          toolName: result.toolName,
+          params: result.input || {},
+          toolResult: toolResult,
+        },
+        agentContext
+      );
+    }
+    return convertToolResult(result, toolResult, user_messages);
   }
 
   protected system_auto_tools(agentNode: WorkflowAgent): Tool[] {
@@ -450,6 +477,10 @@ export class Agent {
     if (status == "abort" && this.agentContext) {
       this.agentContext?.variables.clear();
     }
+  }
+
+  protected canParallelToolCalls(toolCalls: LanguageModelV2ToolCallPart[]): boolean {
+    return config.parallelToolCalls;
   }
 
   get Llms(): string[] | undefined {
