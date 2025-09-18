@@ -479,7 +479,7 @@ export class Agent {
     }
   }
 
-  protected canParallelToolCalls(toolCalls: LanguageModelV2ToolCallPart[]): boolean {
+  public canParallelToolCalls(toolCalls?: LanguageModelV2ToolCallPart[]): boolean {
     return config.parallelToolCalls;
   }
 

@@ -1,43 +1,49 @@
+import config from "../../config";
 import { AgentContext } from "../../core/context";
 import { run_build_dom_tree } from "./build_dom_tree";
 import { BaseBrowserAgent, AGENT_NAME } from "./browser_base";
 import {
   LanguageModelV2Prompt,
   LanguageModelV2FilePart,
+  LanguageModelV2ToolCallPart,
 } from "@ai-sdk/provider";
 import { Tool, ToolResult, IMcpClient } from "../../types";
 import { mergeTools, sleep, toImage } from "../../common/utils";
 
 export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
   constructor(llms?: string[], ext_tools?: Tool[], mcpClient?: IMcpClient) {
-    const description = `You are a browser operation agent, use structured commands to interact with the browser.
+    let description = `You are a browser operation agent, use structured commands to interact with the browser.
 * This is a browser GUI interface where you need to analyze webpages by taking screenshot and page element structures, and specify action sequences to complete designated tasks.
 * For your first visit, please start by calling either the \`navigate_to\` or \`current_page\` tool. After each action you perform, I will provide you with updated information about the current state, including page screenshots and structured element data that has been specially processed for easier analysis.
+* During execution, please output user-friendly step information. Do not output HTML-related element and index information to users, as this would cause user confusion.
+
 * Screenshot description:
   - Screenshot are used to understand page layouts, with labeled bounding boxes corresponding to element indexes. Each bounding box and its label share the same color, with labels typically positioned in the top-right corner of the box.
   - Screenshot help verify element positions and relationships. Labels may sometimes overlap, so extracted elements are used to verify the correct elements.
   - In addition to screenshot, simplified information about interactive elements is returned, with element indexes corresponding to those in the screenshot.
   - This tool can ONLY screenshot the VISIBLE content. If a complete content is required, use 'extract_page_content' instead.
   - If the webpage content hasn't loaded, please use the \`wait\` tool to allow time for the content to load.
-* ELEMENT INTERACTION:
-   - Only use indexes that exist in the provided element list
-   - Browser tools only return elements in visible viewport by default
-   - Each element has a unique index number (e.g., "[33]:<button>Submit</button>")
-   - Elements marked with "[]:" are non-interactive (for context only, e.g., "[]: Google")
-   - Use the latest element index, do not rely on historical outdated element indexes
-   - Due to technical limitations, not all interactive elements may be identified; use coordinates to interact with unlisted elements
-* ERROR HANDLING:
-   - If no suitable elements exist, use other functions to complete the task
-   - If stuck, try alternative approaches, don't refuse tasks
-   - Handle popups/cookies by accepting or closing them
-   - When encountering scenarios that require user assistance such as login, verification codes, QR code scanning, Payment, etc, you can request user help.
-* BROWSER OPERATION:
-   - Use scroll to find elements you are looking for, When extracting content, prioritize using extract_page_content, only scroll when you need to load more content
-   - Please follow user instructions and don't be lazy until the task is completed. For example, if a user asks you to find 30 people, don't just find 10 - keep searching until you find all 30
+* Element interaction:
+  - Only use indexes that exist in the provided element list
+  - Browser tools only return elements in visible viewport by default
+  - Each element has a unique index number (e.g., "[33]:<button>Submit</button>")
+  - Elements marked with "[]:" are non-interactive (for context only, e.g., "[]: Google")
+  - Use the latest element index, do not rely on historical outdated element indexes
+  - Due to technical limitations, not all interactive elements may be identified; use coordinates to interact with unlisted elements
+* Error handling:
+  - If no suitable elements exist, use other functions to complete the task
+  - If stuck, try alternative approaches, don't refuse tasks
+  - Handle popups/cookies by accepting or closing them
+  - When encountering scenarios that require user assistance such as login, verification codes, QR code scanning, Payment, etc, you can request user help.
+* Browser operation:
+  - Use scroll to find elements you are looking for, When extracting content, prioritize using extract_page_content, only scroll when you need to load more content
+  - Please follow user instructions and don't be lazy until the task is completed. For example, if a user asks you to find 30 people, don't just find 10 - keep searching until you find all 30.`;
+    if (config.parallelToolCalls) {
+      description += `
 * Parallelism:
-   - When operating multiple independent steps, they should be executed in parallel as much as possible. For example, when filling out multiple form fields, they should be filled in parallel as much as possible to improve efficiency, rather than operating step by step.
-* During execution, please output user-friendly step information. Do not output HTML-related element and index information to users, as this would cause user confusion.
-`;
+   - When performing multiple independent steps, they should be executed in parallel whenever possible. For example, when filling out a form, fields that are not dependent on each other should be filled simultaneously.
+   - Avoid parallel processing for dependent operations, such as those that need to wait for page loading, DOM changes, redirects, subsequent operations that depend on the results of previous operations, or operations that may interfere with each other and affect the same page elements. In these cases, please do not use parallelization.`;
+    }
     const _tools_ = [] as Tool[];
     super({
       name: AGENT_NAME,
@@ -204,6 +210,23 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
 
   protected get_element_script(index: number): string {
     return `window.get_highlight_element(${index});`;
+  }
+
+  public canParallelToolCalls(toolCalls?: LanguageModelV2ToolCallPart[]): boolean {
+    if (toolCalls) {
+      for (let i = 0; i < toolCalls.length; i++) {
+        const toolCall = toolCalls[i];
+        if (
+          toolCall.toolName == "wait" ||
+          toolCall.toolName == "navigate_to" ||
+          toolCall.toolName == "switch_tab" ||
+          toolCall.toolName == "scroll_mouse_wheel"
+        ) {
+          return false;
+        }
+      }
+    }
+    return super.canParallelToolCalls(toolCalls);
   }
 
   private buildInitTools(): Tool[] {

@@ -29,9 +29,6 @@ You are {name}, an autonomous AI agent for {agent} agent.
     <node input="variable name" output="variable name" status="todo / done">task step node</node>{nodePrompt}
   </nodes>
 </root>
-
-For maximum efficiency, whenever you need to perform multiple independent operations, invoke all relevant tools simultaneously rather than sequentially.
-The output language should follow the language corresponding to the user's task.
 `;
 
 const HUMAN_PROMPT = `
@@ -45,6 +42,7 @@ During the task execution process, you can use the \`${human_interact}\` tool to
 const VARIABLE_PROMPT = `
 * VARIABLE STORAGE
 When a step node has input/output variable attributes, use the \`${variable_storage}\` tool to read from and write to these variables, these variables enable context sharing and coordination between multiple agents.
+\`${variable_storage}\` tool does not support parallel processing.
 `;
 
 const FOR_EACH_NODE = `
@@ -126,13 +124,19 @@ export function getAgentSystemPrompt(
       }
     }
   }
-  return AGENT_SYSTEM_TEMPLATE.replace("{name}", config.name)
+  let sysPrompt = AGENT_SYSTEM_TEMPLATE.replace("{name}", config.name)
     .replace("{agent}", agent.Name)
     .replace("{description}", agent.Description)
     .replace("{prompt}", "\n" + prompt.trim())
     .replace("{nodePrompt}", nodePrompt)
     .replace("{datetime}", new Date().toLocaleString())
     .trim();
+  sysPrompt += "\n"
+  if (agent.canParallelToolCalls()) {
+    sysPrompt += "\nFor maximum efficiency, whenever you need to perform multiple independent operations, invoke all relevant tools simultaneously rather than sequentially. Parallel execution should only be used when operations are truly independent and won't cause conflicts or race conditions."
+  }
+  sysPrompt += "\nThe output language should follow the language corresponding to the user's task."
+  return sysPrompt;
 }
 
 export function getAgentUserPrompt(

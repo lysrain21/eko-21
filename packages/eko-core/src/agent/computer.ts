@@ -239,7 +239,7 @@ This is a computer GUI interface, observe the execution through screenshots, and
             key: {
               type: "string",
               description: "The keyboard key",
-              enum: keyboardKeys,
+              enum: keyboardKeys.filter((key) => key.indexOf("+") == -1),
             },
           },
           required: ["key"],
