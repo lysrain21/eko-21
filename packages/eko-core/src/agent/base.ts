@@ -196,6 +196,10 @@ export class Agent {
     const user_messages: LanguageModelV2Prompt = [];
     const toolResults: LanguageModelV2ToolResultPart[] = [];
     // results = memory.removeDuplicateToolUse(results);
+    messages.push({
+      role: "assistant",
+      content: results,
+    });
     if (results.length == 0) {
       return null;
     }
@@ -224,10 +228,6 @@ export class Agent {
         toolResults.push(toolResult);
       }
     }
-    messages.push({
-      role: "assistant",
-      content: results,
-    });
     if (toolResults.length > 0) {
       messages.push({
         role: "tool",
