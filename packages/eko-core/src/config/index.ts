@@ -6,6 +6,7 @@ type GlobalConfig = {
   maxRetryNum: number;
   agentParallel: boolean;
   compressThreshold: number; // Dialogue context compression threshold (message count)
+  compressTokensThreshold: number; // Dialogue context compression threshold (token count)
   largeTextLength: number;
   fileTextMaxLength: number;
   maxDialogueImgFileNum: number;
@@ -23,6 +24,7 @@ const config: GlobalConfig = {
   maxRetryNum: 3,
   agentParallel: false,
   compressThreshold: 80,
+  compressTokensThreshold: 100000,
   largeTextLength: 5000,
   fileTextMaxLength: 20000,
   maxDialogueImgFileNum: 1,
