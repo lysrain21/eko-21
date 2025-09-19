@@ -1,5 +1,5 @@
-import { Agent } from "../agent";
 import config from "../config";
+import { Agent } from "../agent";
 import Context from "../core/context";
 import { sub } from "../common/utils";
 import { WorkflowAgent, Tool } from "../types";
@@ -37,6 +37,7 @@ During the task execution process, you can use the \`${human_interact}\` tool to
 - When performing dangerous operations such as deleting files, confirmation from humans is required.
 - When encountering obstacles while accessing websites, such as requiring user login, captcha verification, QR code scanning, or human verification, you need to request manual assistance.
 - Please do not use the \`${human_interact}\` tool frequently.
+- The \`${human_interact}\` tool does not support parallel calls.
 `;
 
 const VARIABLE_PROMPT = `
