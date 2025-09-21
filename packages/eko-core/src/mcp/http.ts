@@ -53,6 +53,11 @@ export class SimpleHttpMcpClient implements IMcpClient {
       },
       signal
     );
+    if (this.mcpSessionId) {
+      try {
+        await this.request("notifications/initialized", {});
+      } catch(ignored) {}
+    }
     this.connected = true;
   }
 
