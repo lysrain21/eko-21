@@ -155,7 +155,7 @@ export class SimpleSseMcpClient implements IMcpClient {
     params: Record<string, any>,
     signal?: AbortSignal
   ): Promise<any> {
-    const id = method.startsWith("notifications/") ? null : uuidv4();
+    const id = method.startsWith("notifications/") ? undefined : uuidv4();
     try {
       const callback = new Promise<any>((resolve, reject) => {
         if (signal) {

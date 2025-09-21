@@ -112,7 +112,7 @@ export class SimpleHttpMcpClient implements IMcpClient {
     signal?: AbortSignal
   ): Promise<any> {
     try {
-      const id = method.startsWith("notifications/") ? null : uuidv4();
+      const id = method.startsWith("notifications/") ? undefined : uuidv4();
       const extHeaders: Record<string, string> = {};
       if (this.mcpSessionId && method !== "initialize") {
         extHeaders["Mcp-Session-Id"] = this.mcpSessionId;
