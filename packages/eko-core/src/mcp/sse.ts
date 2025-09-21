@@ -155,7 +155,7 @@ export class SimpleSseMcpClient implements IMcpClient {
     params: Record<string, any>,
     signal?: AbortSignal
   ): Promise<any> {
-    const id = uuidv4();
+    const id = method.startsWith("notifications/") ? null : uuidv4();
     try {
       const callback = new Promise<any>((resolve, reject) => {
         if (signal) {
@@ -165,7 +165,7 @@ export class SimpleSseMcpClient implements IMcpClient {
             reject(error);
           });
         }
-        this.requestMap.set(id, resolve);
+        id && this.requestMap.set(id, resolve);
       });
       Log.debug(`MCP Client, ${method}`, id, params);
       const response = await fetch(this.msgUrl as string, {
@@ -215,7 +215,7 @@ export class SimpleSseMcpClient implements IMcpClient {
         throw new Error(`MCP ${method} error:` + body);
       }
     } finally {
-      this.requestMap.delete(id);
+      id && this.requestMap.delete(id);
     }
   }
 
@@ -227,6 +227,12 @@ export class SimpleSseMcpClient implements IMcpClient {
   }
 
   async close(): Promise<void> {
+    try {
+      await this.request("notifications/cancelled", {
+        requestId: uuidv4(),
+        reason: "User requested cancellation",
+      });
+    } catch (ignored) {}
     this.pingTimer && clearInterval(this.pingTimer);
     this.reconnectTimer && clearTimeout(this.reconnectTimer);
     this.sseHandler && this.sseHandler.close && this.sseHandler.close();

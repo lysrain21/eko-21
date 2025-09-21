@@ -96,10 +96,12 @@ export class SimpleHttpMcpClient implements IMcpClient {
   async close(): Promise<void> {
     this.connected = false;
     if (this.mcpSessionId) {
-      this.request("notifications/cancelled", {
-        requestId: uuidv4(),
-        reason: "User requested cancellation",
-      });
+      try {
+        await this.request("notifications/cancelled", {
+          requestId: uuidv4(),
+          reason: "User requested cancellation",
+        });
+      } catch (ignored) {}
       this.mcpSessionId = null;
     }
   }
@@ -110,7 +112,7 @@ export class SimpleHttpMcpClient implements IMcpClient {
     signal?: AbortSignal
   ): Promise<any> {
     try {
-      const id = uuidv4();
+      const id = method.startsWith("notifications/") ? null : uuidv4();
       const extHeaders: Record<string, string> = {};
       if (this.mcpSessionId && method !== "initialize") {
         extHeaders["Mcp-Session-Id"] = this.mcpSessionId;
