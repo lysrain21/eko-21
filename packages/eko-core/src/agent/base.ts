@@ -207,7 +207,13 @@ export class Agent {
       return results.map((s) => s.text).join("\n\n");
     }
     const toolCalls = results.filter((s) => s.type == "tool-call");
-    if (toolCalls.length > 1 && this.canParallelToolCalls(toolCalls)) {
+    if (
+      toolCalls.length > 1 &&
+      this.canParallelToolCalls(toolCalls) &&
+      toolCalls.every(
+        (s) => agentTools.find((t) => t.name == s.toolName)?.supportParallelCalls
+      )
+    ) {
       const results = await Promise.all(
         toolCalls.map((toolCall) =>
           this.callToolCall(agentContext, agentTools, toolCall, user_messages)
@@ -479,7 +485,9 @@ export class Agent {
     }
   }
 
-  public canParallelToolCalls(toolCalls?: LanguageModelV2ToolCallPart[]): boolean {
+  public canParallelToolCalls(
+    toolCalls?: LanguageModelV2ToolCallPart[]
+  ): boolean {
     return config.parallelToolCalls;
   }
 
