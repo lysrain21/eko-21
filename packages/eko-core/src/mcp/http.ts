@@ -138,6 +138,10 @@ export class SimpleHttpMcpClient implements IMcpClient {
         keepalive: true,
         signal: signal,
       });
+
+      if (method.startsWith("notifications/")){
+          return;
+      }
       if (method == "initialize") {
         this.mcpSessionId =
           response.headers.get("Mcp-Session-Id") ||
