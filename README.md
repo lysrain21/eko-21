@@ -117,36 +117,6 @@ let result = await eko.run("Search for the latest news about Musk, summarize and
 $ pnpm install @eko-ai/eko
 ```
 
-### Using Multiple Models
-
-You can configure multiple models and switch between them:
-
-```typescript
-const llms: LLMs = {
-  default: {
-    provider: "anthropic",
-    model: "claude-sonnet-4-20250514",
-    apiKey: "your-anthropic-key"
-  },
-  qwen: {
-    provider: "openai",
-    model: "qwen-plus",
-    apiKey: "your-qwen-key",
-    config: {
-      baseURL: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
-    }
-  },
-  doubao: {
-    provider: "openai",
-    model: "doubao-seed-1-6-250615",
-    apiKey: "your-doubao-key",
-    config: {
-      baseURL: "https://ark.cn-beijing.volces.com/api/v3"
-    }
-  }
-};
-```
-
 ## Example Projects
 
 The repository ships with three workspace examples under the `example/` folder.
@@ -169,7 +139,7 @@ pnpm run build
 ```
 
 Load the generated `dist` directory via `chrome://extensions` → Developer Mode → Load unpacked.
-Configure your API key in the extension options before running any automation task.
+Configure your API key in the extension options before running the automation task.
 
 ### Node.js Automation (`example/nodejs`)
 
