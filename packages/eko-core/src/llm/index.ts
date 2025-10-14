@@ -13,11 +13,12 @@ import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import {
-  GenerateResult,
-  LLMRequest,
   LLMs,
+  LLMRequest,
   StreamResult,
+  GenerateResult,
 } from "../types/llm.types";
+import Context, { AgentContext } from "../core/context";
 import { defaultLLMProviderOptions } from "../agent/llm";
 
 export class RetryLanguageModel {
@@ -25,20 +26,34 @@ export class RetryLanguageModel {
   private names: string[];
   private stream_first_timeout: number;
   private stream_token_timeout: number;
+  private context?: Context;
+  private agentContext?: AgentContext;
 
   constructor(
     llms: LLMs,
     names?: string[],
     stream_first_timeout?: number,
-    stream_token_timeout?: number
+    stream_token_timeout?: number,
+    context?: Context | AgentContext,
   ) {
     this.llms = llms;
     this.names = names || [];
+    context && this.setContext(context);
     this.stream_first_timeout = stream_first_timeout || 30_000;
     this.stream_token_timeout = stream_token_timeout || 180_000;
     if (this.names.indexOf("default") == -1) {
       this.names.push("default");
     }
+  }
+
+  setContext(context?: Context | AgentContext) {
+    if (!context) {
+      this.context = undefined;
+      this.agentContext = undefined;
+      return;
+    }
+    this.context = context instanceof Context ? context : context.context;
+    this.agentContext = context instanceof AgentContext ? context : undefined;
   }
 
   async call(request: LLMRequest): Promise<GenerateResult> {
@@ -79,7 +94,7 @@ export class RetryLanguageModel {
       }
       let _options = options;
       if (llmConfig.handler) {
-        _options = await llmConfig.handler(_options);
+        _options = await llmConfig.handler(_options, this.context, this.agentContext);
       }
       try {
         let result = (await llm.doGenerate(_options)) as GenerateResult;
@@ -148,7 +163,7 @@ export class RetryLanguageModel {
       }
       let _options = options;
       if (llmConfig.handler) {
-        _options = await llmConfig.handler(_options);
+        _options = await llmConfig.handler(_options, this.context, this.agentContext);
       }
       try {
         const controller = new AbortController();
