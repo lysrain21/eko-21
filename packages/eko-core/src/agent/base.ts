@@ -119,6 +119,7 @@ export class Agent {
     ];
     agentContext.messages = messages;
     const rlm = new RetryLanguageModel(context.config.llms, this.llms);
+    rlm.setContext(agentContext);
     let agentTools = tools;
     while (loopNum < maxReactNum) {
       await context.checkAborted();
