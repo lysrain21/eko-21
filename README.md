@@ -174,7 +174,7 @@ Eko can be used in multiple environments:
 - **Slides Agent by Eko**: https://github.com/MICAHFANG/slides-agent-by-eko
 - **Universal Sidebar Assistant**: https://github.com/San12341/eko-broser-extension.git
 - **Orbit X Smart Terminal**: https://github.com/Skywang16/OrbitX/tree/main
-- **48 小时极限迭代铸就卓越浏览器体验**: https://github.com/MoonIRL/eko
+- **48 Hour Browser Challenge**: https://github.com/MoonIRL/eko
 
 ## License
 
