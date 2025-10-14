@@ -21,8 +21,6 @@ export type LLMprovider =
   | "aws"
   | "openrouter"
   | "openai-compatible"
-  | "kimi"
-  | "qwen"
   | ProviderV2;
 
 export type LLMConfig = {

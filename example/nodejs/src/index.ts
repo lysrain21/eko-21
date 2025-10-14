@@ -8,8 +8,6 @@ const openaiBaseURL = process.env.OPENAI_BASE_URL;
 const openaiApiKey = process.env.OPENAI_API_KEY;
 const claudeBaseURL = process.env.ANTHROPIC_BASE_URL;
 const claudeApiKey = process.env.ANTHROPIC_API_KEY;
-const kimiBaseURL = process.env.KIMI_BASE_URL;
-const kimiApiKey = process.env.KIMI_API_KEY;
 
 const llms: LLMs = {
   default: {
@@ -26,15 +24,6 @@ const llms: LLMs = {
     apiKey: openaiApiKey || "",
     config: {
       baseURL: openaiBaseURL,
-    },
-  },
-  kimi: {
-    provider: "kimi",
-    model: "kimi-k2-0905-preview",
-    apiKey: kimiApiKey || "",
-    config: {
-      baseURL: kimiBaseURL,
-      temperature: 0.6,
     },
   },
 };
