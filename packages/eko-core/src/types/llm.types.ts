@@ -21,7 +21,7 @@ export type LLMprovider =
   | "aws"
   | "openrouter"
   | "openai-compatible"
-  | "kimi"
+  // | "kimi"  // Temporarily disabled: Kimi model cannot drive eko
   | "qwen"
   | ProviderV2;
 

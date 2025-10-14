@@ -52,7 +52,8 @@ const OptionsPage = () => {
     { value: "openai", label: "OpenAI" },
     { value: "openrouter", label: "OpenRouter" },
     { value: "openai-compatible", label: "OpenAI Compatible" },
-    { value: "kimi", label: "Kimi (Moonshot AI)" },
+    // Temporarily disabled: Kimi model cannot drive eko
+    // { value: "kimi", label: "Kimi (Moonshot AI)" },
     { value: "qwen", label: "Qwen (Alibaba Cloud)" },
   ];
 
@@ -85,9 +86,10 @@ const OptionsPage = () => {
     "openai-compatible": [
       { value: "doubao-seed-1-6-250615", label: "doubao-seed-1-6-250615" },
     ],
-    kimi: [
-      { value: "kimi-k2-0905-preview", label: "kimi-k2-0905-preview (default)" },
-    ],
+    // Temporarily disabled: Kimi model cannot drive eko
+    // kimi: [
+    //   { value: "kimi-k2-0905-preview", label: "kimi-k2-0905-preview (default)" },
+    // ],
     qwen: [
       { value: "qwen-plus", label: "qwen-plus (default)" },
       { value: "qwen-turbo", label: "qwen-turbo" },
@@ -103,7 +105,8 @@ const OptionsPage = () => {
       anthropic: "https://api.anthropic.com/v1",
       openrouter: "https://openrouter.ai/api/v1",
       "openai-compatible": "https://openrouter.ai/api/v1",
-      kimi: "https://api.moonshot.cn/v1",
+      // Temporarily disabled: Kimi model cannot drive eko
+      // kimi: "https://api.moonshot.cn/v1",
       qwen: "https://dashscope.aliyuncs.com/compatible-mode/v1",
     };
     const newConfig = {
