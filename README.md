@@ -148,7 +148,7 @@ cd example/nodejs
 pnpm install
 pnpm run playwright   # first time only, installs browsers
 pnpm run build
-OPENAI_API_KEY=... ANTHROPIC_API_KEY=... pnpm run start
+OPENAI_API_KEY=... ANTHROPIC_API_KEY=... pnpm run startgit
 ```
 
 The Node.js demo drives Playwright through Eko; provide at least one model API key before running it.
