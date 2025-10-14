@@ -52,6 +52,8 @@ const OptionsPage = () => {
     { value: "openai", label: "OpenAI" },
     { value: "openrouter", label: "OpenRouter" },
     { value: "openai-compatible", label: "OpenAI Compatible" },
+    { value: "kimi", label: "Kimi (Moonshot AI)" },
+    { value: "qwen", label: "Qwen (Alibaba Cloud)" },
   ];
 
   const modelOptions = {
@@ -83,6 +85,16 @@ const OptionsPage = () => {
     "openai-compatible": [
       { value: "doubao-seed-1-6-250615", label: "doubao-seed-1-6-250615" },
     ],
+    kimi: [
+      { value: "kimi-k2-0905-preview", label: "kimi-k2-0905-preview (default)" },
+    ],
+    qwen: [
+      { value: "qwen-plus", label: "qwen-plus (default)" },
+      { value: "qwen-turbo", label: "qwen-turbo" },
+      { value: "qwen-max", label: "qwen-max" },
+      { value: "qwen-vl-max", label: "qwen-vl-max (vision)" },
+      { value: "qwen-vl-plus", label: "qwen-vl-plus (vision)" },
+    ],
   };
 
   const handleLLMChange = (value: string) => {
@@ -91,6 +103,8 @@ const OptionsPage = () => {
       anthropic: "https://api.anthropic.com/v1",
       openrouter: "https://openrouter.ai/api/v1",
       "openai-compatible": "https://openrouter.ai/api/v1",
+      kimi: "https://api.moonshot.cn/v1",
+      qwen: "https://dashscope.aliyuncs.com/compatible-mode/v1",
     };
     const newConfig = {
       llm: value,

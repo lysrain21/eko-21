@@ -22,6 +22,7 @@ export type LLMprovider =
   | "openrouter"
   | "openai-compatible"
   | "kimi"
+  | "qwen"
   | ProviderV2;
 
 export type LLMConfig = {
