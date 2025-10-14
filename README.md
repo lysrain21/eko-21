@@ -59,16 +59,10 @@ Follow these steps when moving an existing Eko 2.x project to 3.0:
 
 ## Quickstart
 
-### Installation
-
-```bash
-pnpm install @eko-ai/eko
-```
-
-### Usage
+> **Note**: Please refer to the [Eko Quickstart guide](https://eko.fellou.ai/docs/getting-started/quickstart/) guide for full instructions on how to run it.
 
 > **Security Warning**
->
+> 
 > DO NOT use API Keys in browser/frontend code!
 >
 > This will expose your credentials and may lead to unauthorized usage.
@@ -101,65 +95,44 @@ let eko = new Eko({ llms, agents });
 let result = await eko.run("Search for the latest news about Musk, summarize and save to the desktop as Musk.md");
 ```
 
-> **Note**: For full documentation, visit the [Eko Quickstart guide](https://eko.fellou.ai/docs/getting-started/quickstart/).
-
-## Local Development
-
-If you want to develop or contribute to Eko itself:
-
 ```bash
-# 1. Install dependencies
-pnpm install
-
-# 2. Build all packages
-pnpm build
-
-# 3. Run tests
-pnpm test
+$ pnpm install @eko-ai/eko
 ```
 
 ## Example Projects
 
-The repository includes three example applications under `example/` that demonstrate Eko's capabilities:
-
-**Prerequisites:** Run `pnpm install` in the root directory first.
+The repository ships with three workspace examples under the `example/` folder. After running the
+core install (`pnpm install`) you can launch any of them with the commands below. Each example
+consumes the local 3.0 packages, so rebuilding the main workspace automatically refreshes them.
 
 ### Browser Extension (`example/extension`)
-
-Build and load a Chrome extension that automates browser tasks:
 
 ```bash
 pnpm --filter @eko-ai/eko-extension build
 pnpm --filter @eko-ai/eko-extension-example run build
 ```
 
-Then load `example/extension/dist` via `chrome://extensions` → Developer Mode → Load unpacked.
-Configure your API key in the extension options before running tasks.
+Load the generated `example/extension/dist` directory via `chrome://extensions` → Developer Mode →
+Load unpacked. Configure your API key in the extension options before running the automation task.
 
 ### Node.js Automation (`example/nodejs`)
 
-Run automated browser tasks with Playwright:
-
 ```bash
-# Build the example
 pnpm --filter @eko-ai/eko-nodejs-example run build
-
-# Install Playwright browsers (first time only)
-pnpm --filter @eko-ai/eko-nodejs-example run playwright
-
-# Run the example (provide at least one API key)
+pnpm --filter @eko-ai/eko-nodejs-example run playwright   # first time only, installs browsers
 OPENAI_API_KEY=... ANTHROPIC_API_KEY=... pnpm --filter @eko-ai/eko-nodejs-example run start
 ```
 
-### Web Login Demo (`example/web`)
+The Node.js demo drives Playwright through Eko; provide at least one model API key before running it.
 
-Start a React app with automated login flow:
+### Web Login Demo (`example/web`)
 
 ```bash
 pnpm --filter @eko-ai/eko-web-example run start
 ```
 
-This launches a dev server with a login flow you can automate using Eko agents.
+This starts a React dev server on the default port with a simple login flow that you can automate
+with the browser or web agents.
 
 ## Use Cases
 

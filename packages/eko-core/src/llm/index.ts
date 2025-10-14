@@ -294,22 +294,6 @@ export class RetryLanguageModel {
         headers: llm.config?.headers,
         compatibility: llm.config?.compatibility,
       }).languageModel(llm.model);
-    } else if (llm.provider == "kimi") {
-      return createOpenAICompatible({
-        name: llm.config?.name || "kimi",
-        apiKey: apiKey,
-        baseURL: baseURL || "https://api.moonshot.cn/v1",
-        fetch: llm.fetch,
-        headers: llm.config?.headers,
-      }).languageModel(llm.model);
-    } else if (llm.provider == "qwen") {
-      return createOpenAICompatible({
-        name: llm.config?.name || "qwen",
-        apiKey: apiKey,
-        baseURL: baseURL || "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        fetch: llm.fetch,
-        headers: llm.config?.headers,
-      }).languageModel(llm.model);
     } else {
       return llm.provider.languageModel(llm.model);
     }
