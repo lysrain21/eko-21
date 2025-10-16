@@ -195,7 +195,8 @@ export function sub(
     return "";
   }
   if (str.length > maxLength) {
-    return str.substring(0, maxLength) + (appendPoint ? "..." : "");
+    // return str.substring(0, maxLength) + (appendPoint ? "..." : "");
+    return Array.from(str).slice(0, maxLength).join('') + (appendPoint ? "..." : "");
   }
   return str;
 }
