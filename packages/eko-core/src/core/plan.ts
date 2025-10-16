@@ -159,10 +159,11 @@ export class Planner {
       });
     }
     if (workflow.taskPrompt) {
-      workflow.taskPrompt += "\n" + taskPrompt.trim();
+      workflow.taskPrompt += "\n" + taskPrompt;
     } else {
-      workflow.taskPrompt = taskPrompt.trim();
+      workflow.taskPrompt = taskPrompt;
     }
+    workflow.taskPrompt = workflow.taskPrompt.trim();
     return workflow;
   }
 }
