@@ -211,6 +211,7 @@ export class Eko {
       context.conversation.splice(0, context.conversation.length);
       if (
         config.expertMode &&
+        !workflow.modified &&
         agentTree.nextAgent &&
         lastAgent?.AgentContext &&
         (await checkTaskReplan(lastAgent.AgentContext))
