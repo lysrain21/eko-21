@@ -197,7 +197,13 @@ export function mark_screenshot_highlight_elements(
 
         // The tag position is in the upper right corner.
         const labelX = area.x + area.width - labelWidth;
-        const labelY = area.y;
+        let labelY = area.y;
+
+        // Adjust if box is too small
+        if (area.width < labelWidth + 4 || area.height < labelHeight + 4) {
+          // Position outside the box if it's too small
+          labelY = area.y - labelHeight;
+        }
 
         // Draw label background
         ctx.fillStyle = color;
