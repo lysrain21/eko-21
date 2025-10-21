@@ -489,15 +489,10 @@ export function run_build_dom_tree() {
         interactiveRoles.has(ariaRole) ||
         (tabIndex !== null && tabIndex !== '-1') ||
         element.getAttribute('data-action') === 'a-dropdown-select' ||
-        element.getAttribute('data-action') === 'a-dropdown-button';
+        element.getAttribute('data-action') === 'a-dropdown-button' || 
+        element.getAttribute('contenteditable') === 'true';
 
       if (hasInteractiveRole) return true;
-
-      // Get computed style
-      const style = getCachedComputedStyle(element);
-
-      // Check if element has click-like styling
-      const hasClickStyling = style.cursor === 'pointer' || element.style.cursor === 'pointer';
 
       // Check for event listeners
       const hasClickHandler =
@@ -508,10 +503,13 @@ export function run_build_dom_tree() {
         element.hasAttribute('v-on:click');
 
       // Helper function to safely get event listeners
-      function getEventListeners(el) {
-        // if (window.getEventListeners) {
-        //   return window.getEventListeners?.(el) || {};
-        // }
+      function getElementEventListeners(el) {
+        if (window.getEventListeners) {
+          const listeners = window.getEventListeners?.(el);
+          if (listeners) {
+            return listeners;
+          }
+        }
 
         // List of common event types to check
         const listeners = {};
@@ -543,7 +541,7 @@ export function run_build_dom_tree() {
       }
 
       // Check for click-related events on the element itself
-      const listeners = getEventListeners(element);
+      const listeners = getElementEventListeners(element);
       const hasClickListeners =
         listeners &&
         (listeners.click?.length > 0 ||
@@ -559,23 +557,28 @@ export function run_build_dom_tree() {
         element.hasAttribute('aria-selected') ||
         element.hasAttribute('aria-checked');
 
-      // Check for form-related functionality
-      const isFormRelated =
-        element.form !== undefined ||
-        element.hasAttribute('contenteditable') ||
-        (style && style.userSelect !== 'none');
-
       // Check if element is draggable
       const isDraggable = element.draggable || element.getAttribute('draggable') === 'true';
 
-      return (
-        hasAriaProps ||
-        hasClickStyling ||
-        hasClickHandler ||
-        hasClickListeners ||
-        // isFormRelated ||
-        isDraggable
-      );
+      if (hasAriaProps || hasClickHandler || hasClickListeners || isDraggable) {
+        return true;
+      }
+
+      // Check if element has click-like styling
+      let hasClickStyling = element.style.cursor === 'pointer' || getCachedComputedStyle(element).cursor === 'pointer';
+      if (hasClickStyling) {
+        let count = 0;
+        let current = element.parentElement;
+        while (current && current !== document.documentElement) {
+          hasClickStyling = current.style.cursor === 'pointer' || getCachedComputedStyle(current).cursor === 'pointer';
+          if (hasClickStyling) return false;
+          current = current.parentElement;
+          if (++count > 10) break;
+        }
+        return true;
+      }
+      
+      return false;
     }
 
     // Helper function to check if element is visible
@@ -612,10 +615,12 @@ export function run_build_dom_tree() {
           if (!topEl) return false;
 
           // Check if the element or any of its parents match our target element
+          let count = 0;
           let current = topEl;
           while (current && current !== shadowRoot) {
             if (current === element) return true;
             current = current.parentElement;
+            if (++count > 15) break;
           }
           return false;
         } catch (e) {
@@ -631,10 +636,12 @@ export function run_build_dom_tree() {
         const topEl = document.elementFromPoint(point.x, point.y);
         if (!topEl) return false;
 
+        let count = 0;
         let current = topEl;
         while (current && current !== document.documentElement) {
           if (current === element) return true;
           current = current.parentElement;
+          if (++count > 15) break;
         }
         return false;
       } catch (e) {
