@@ -24,19 +24,29 @@ export function run_build_dom_tree() {
   /**
    * Get clickable elements on the page
    *
-   * @param {*} doHighlightElements Is highlighted
+   * @param {*} markHighlightElements Is mark highlighted
    * @param {*} includeAttributes [attr_names...]
-   * @returns { element_str, selector_map }
+   * @returns { element_str, client_rect, selector_map, area_map }
    */
-  function get_clickable_elements(doHighlightElements = true, includeAttributes) {
+  function get_clickable_elements(markHighlightElements = true, includeAttributes) {
     window.clickable_elements = {};
     computedStyleCache = new WeakMap();
     document.querySelectorAll("[eko-user-highlight-id]").forEach(ele => ele.removeAttribute("eko-user-highlight-id"));
-    let page_tree = build_dom_tree(doHighlightElements);
+    let page_tree = build_dom_tree(markHighlightElements);
     let element_tree = parse_node(page_tree);
-    let selector_map = create_selector_map(element_tree);
     let element_str = clickable_elements_to_string(element_tree, includeAttributes);
-    return { element_str, selector_map };
+    let client_rect = {
+      width: window.innerWidth || document.documentElement.clientWidth,
+      height: window.innerHeight || document.documentElement.clientHeight,
+    }
+    if (markHighlightElements) {
+      let selector_map = {};
+      // selector_map = create_selector_map(element_tree);
+      return { element_str, client_rect, selector_map };
+    } else {
+      let area_map = create_area_map(element_tree);
+      return { element_str, client_rect, area_map };
+    }
   }
 
   function get_highlight_element(highlightIndex) {
@@ -156,6 +166,60 @@ export function run_build_dom_tree() {
     return selector_map;
   }
 
+  function create_area_map(element_tree) {
+    let area_map = {};
+    function process_node(node) {
+      if (node.tagName) {
+        if (node.highlightIndex != null) {
+          const element = window.clickable_elements[node.highlightIndex]
+          area_map[node.highlightIndex] = get_element_real_bounding_rect(element);
+        }
+        for (let i = 0; i < node.children.length; i++) {
+          process_node(node.children[i]);
+        }
+      }
+    }
+    process_node(element_tree);
+    return area_map;
+  }
+
+  function get_element_real_bounding_rect(element) {
+    if (!element || !(element instanceof Element)) {
+      return { x: 0, y: 0, width: 0, height: 0 };
+    }
+
+    let rect = element.getBoundingClientRect();
+    let x = rect.left;
+    let y = rect.top;
+    let width = rect.width;
+    let height = rect.height;
+
+    let win = element.ownerDocument.defaultView;
+    let maxDepth = 10;
+    let depth = 0;
+
+    while (win && win !== win.parent && depth < maxDepth) {
+        depth++;
+        const frameElement = win.frameElement;
+        if (!frameElement) {
+            break;
+        }
+        
+        const frameRect = frameElement.getBoundingClientRect();
+        x += frameRect.left;
+        y += frameRect.top;
+
+        // Consider the border and padding of the iframe.
+        const frameStyle = getCachedComputedStyle(frameElement);
+        x += parseFloat(frameStyle.borderLeftWidth) || 0;
+        y += parseFloat(frameStyle.borderTopWidth) || 0;
+        x += parseFloat(frameStyle.paddingLeft) || 0;
+        y += parseFloat(frameStyle.paddingTop) || 0;
+        win = win.parent;
+    }
+    return { x, y, width, height };
+  }
+
   function parse_node(node_data, parent) {
     if (!node_data) {
       return;
@@ -195,7 +259,7 @@ export function run_build_dom_tree() {
     return element_node;
   }
 
-  function build_dom_tree(doHighlightElements) {
+  function build_dom_tree(markHighlightElements) {
     let highlightIndex = 0; // Reset highlight index
 
     function highlightElement(element, index, parentIframe = null) {
@@ -651,7 +715,7 @@ export function run_build_dom_tree() {
         if (shouldHighlight) {
           nodeData.highlightIndex = highlightIndex++;
           window.clickable_elements[nodeData.highlightIndex] = node;
-          if (doHighlightElements) {
+          if (markHighlightElements) {
             highlightElement(node, nodeData.highlightIndex, parentIframe);
           }
         }
