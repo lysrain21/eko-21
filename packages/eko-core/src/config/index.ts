@@ -34,7 +34,7 @@ const config: GlobalConfig = {
   maxDialogueImgFileNum: 1,
   toolResultMultimodal: true,
   parallelToolCalls: true,
-  markImageMode: "dom",
+  markImageMode: "draw",
   expertMode: false,
   expertModeTodoLoopNum: 10,
 };
