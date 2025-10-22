@@ -494,6 +494,35 @@ export function run_build_dom_tree() {
 
       if (hasInteractiveRole) return true;
 
+      // const eventTypes = [
+      //   'click',
+      //   'mousedown',
+      //   'mouseup',
+      //   'touchstart',
+      //   'touchend',
+      //   'keydown',
+      //   'keyup',
+      //   'focus',
+      //   'blur',
+      // ];
+
+      const clickEventTypes = [
+        'click',
+        'mousedown',
+        'mouseup',
+        'touchstart',
+        'touchend',
+      ];
+
+      // Filter elements that have no real event listeners at all
+      if (window.getEventListeners) {
+        const listeners = window.getEventListeners(element);
+        const hasRealClickListeners = clickEventTypes.some((type) => listeners[type]?.length > 0);
+        if (!hasRealClickListeners) {
+          return false;
+        }
+      }
+
       // Check for event listeners
       const hasClickHandler =
         element.onclick !== null ||
@@ -504,28 +533,10 @@ export function run_build_dom_tree() {
 
       // Helper function to safely get event listeners
       function getElementEventListeners(el) {
-        // if (window.getEventListeners) {
-        //   const listeners = window.getEventListeners?.(el);
-        //   if (listeners) {
-        //     return listeners;
-        //   }
-        // }
-
         // List of common event types to check
         const listeners = {};
-        const eventTypes = [
-          'click',
-          'mousedown',
-          'mouseup',
-          'touchstart',
-          'touchend',
-          'keydown',
-          'keyup',
-          'focus',
-          'blur',
-        ];
 
-        for (const type of eventTypes) {
+        for (const type of clickEventTypes) {
           const handler = el[`on${type}`];
           if (handler) {
             listeners[type] = [
@@ -542,13 +553,7 @@ export function run_build_dom_tree() {
 
       // Check for click-related events on the element itself
       const listeners = getElementEventListeners(element);
-      const hasClickListeners =
-        listeners &&
-        (listeners.click?.length > 0 ||
-          listeners.mousedown?.length > 0 ||
-          listeners.mouseup?.length > 0 ||
-          listeners.touchstart?.length > 0 ||
-          listeners.touchend?.length > 0);
+      const hasClickListeners = clickEventTypes.some((type) => listeners[type]?.length > 0);
 
       // Check for ARIA properties that suggest interactivity
       const hasAriaProps =
