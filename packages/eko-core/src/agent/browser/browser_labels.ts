@@ -625,7 +625,7 @@ export default abstract class BaseBrowserLabelsAgent extends BaseBrowserAgent {
     messages: LanguageModelV2Prompt,
     tools: Tool[]
   ): Promise<boolean> {
-    return config.mode != "fast";
+    return config.mode == "expert";
   }
 
   protected async handleMessages(

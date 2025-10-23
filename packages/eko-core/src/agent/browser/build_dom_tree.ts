@@ -199,23 +199,23 @@ export function run_build_dom_tree() {
     let depth = 0;
 
     while (win && win !== win.parent && depth < maxDepth) {
-        depth++;
-        const frameElement = win.frameElement;
-        if (!frameElement) {
-            break;
-        }
-        
-        const frameRect = frameElement.getBoundingClientRect();
-        x += frameRect.left;
-        y += frameRect.top;
+      depth++;
+      const frameElement = win.frameElement;
+      if (!frameElement) {
+        break;
+      }
 
-        // Consider the border and padding of the iframe.
-        const frameStyle = getCachedComputedStyle(frameElement);
-        x += parseFloat(frameStyle.borderLeftWidth) || 0;
-        y += parseFloat(frameStyle.borderTopWidth) || 0;
-        x += parseFloat(frameStyle.paddingLeft) || 0;
-        y += parseFloat(frameStyle.paddingTop) || 0;
-        win = win.parent;
+      const frameRect = frameElement.getBoundingClientRect();
+      x += frameRect.left;
+      y += frameRect.top;
+
+      // Consider the border and padding of the iframe.
+      const frameStyle = getCachedComputedStyle(frameElement);
+      x += parseFloat(frameStyle.borderLeftWidth) || 0;
+      y += parseFloat(frameStyle.borderTopWidth) || 0;
+      x += parseFloat(frameStyle.paddingLeft) || 0;
+      y += parseFloat(frameStyle.paddingTop) || 0;
+      win = win.parent;
     }
     return { x, y, width, height };
   }
@@ -489,10 +489,39 @@ export function run_build_dom_tree() {
         interactiveRoles.has(ariaRole) ||
         (tabIndex !== null && tabIndex !== '-1') ||
         element.getAttribute('data-action') === 'a-dropdown-select' ||
-        element.getAttribute('data-action') === 'a-dropdown-button' || 
+        element.getAttribute('data-action') === 'a-dropdown-button' ||
         element.getAttribute('contenteditable') === 'true';
 
       if (hasInteractiveRole) return true;
+
+      // const eventTypes = [
+      //   'click',
+      //   'mousedown',
+      //   'mouseup',
+      //   'touchstart',
+      //   'touchend',
+      //   'keydown',
+      //   'keyup',
+      //   'focus',
+      //   'blur',
+      // ];
+
+      const clickEventTypes = [
+        'click',
+        'mousedown',
+        'mouseup',
+        'touchstart',
+        'touchend',
+      ];
+
+      // Filter elements that have no real event listeners at all
+      if (window.getEventListeners) {
+        const listeners = window.getEventListeners(element);
+        const hasRealClickListeners = clickEventTypes.some((type) => listeners[type]?.length > 0);
+        if (!hasRealClickListeners) {
+          return false;
+        }
+      }
 
       // Check for event listeners
       const hasClickHandler =
@@ -504,28 +533,10 @@ export function run_build_dom_tree() {
 
       // Helper function to safely get event listeners
       function getElementEventListeners(el) {
-        if (window.getEventListeners) {
-          const listeners = window.getEventListeners?.(el);
-          if (listeners) {
-            return listeners;
-          }
-        }
-
         // List of common event types to check
         const listeners = {};
-        const eventTypes = [
-          'click',
-          'mousedown',
-          'mouseup',
-          'touchstart',
-          'touchend',
-          'keydown',
-          'keyup',
-          'focus',
-          'blur',
-        ];
 
-        for (const type of eventTypes) {
+        for (const type of clickEventTypes) {
           const handler = el[`on${type}`];
           if (handler) {
             listeners[type] = [
@@ -542,13 +553,7 @@ export function run_build_dom_tree() {
 
       // Check for click-related events on the element itself
       const listeners = getElementEventListeners(element);
-      const hasClickListeners =
-        listeners &&
-        (listeners.click?.length > 0 ||
-          listeners.mousedown?.length > 0 ||
-          listeners.mouseup?.length > 0 ||
-          listeners.touchstart?.length > 0 ||
-          listeners.touchend?.length > 0);
+      const hasClickListeners = clickEventTypes.some((type) => listeners[type]?.length > 0);
 
       // Check for ARIA properties that suggest interactivity
       const hasAriaProps =
@@ -577,8 +582,17 @@ export function run_build_dom_tree() {
         }
         return true;
       }
-      
+
       return false;
+    }
+
+    // Helper function to check if element exists
+    function isElementExist(element) {
+      const style = getCachedComputedStyle(element);
+      return (
+        style?.visibility !== 'hidden' &&
+        style?.display !== 'none'
+      );
     }
 
     // Helper function to check if element is visible
@@ -586,11 +600,7 @@ export function run_build_dom_tree() {
       if (element.offsetWidth === 0 && element.offsetHeight === 0) {
         return false;
       }
-      const style = getCachedComputedStyle(element);
-      return (
-        style?.visibility !== 'hidden' &&
-        style?.display !== 'none'
-      );
+      return isElementExist(element);
     }
 
     // Helper function to check if element is the top element at its position
@@ -760,7 +770,7 @@ export function run_build_dom_tree() {
           console.warn('Unable to access iframe:', node);
         }
       } else {
-        if (nodeData.isVisible != false) {
+        if (isElementExist(node)) {
           const children = Array.from(node.childNodes).map((child) =>
             buildDomTree(child, parentIframe)
           );
